@@ -18,6 +18,7 @@ reserved = {
 
 numbers = [
     "INTEGER",
+    "NINTEGER",
     "FLOAT",
     "HEX",
 ]
@@ -66,7 +67,7 @@ literals = "+-*/;{}()[]"
 
 
 def t_FLOAT(t):
-    r'\d + (\.\d+)'
+    r'\d+(\.\d+)'
     t.value = float(t.value)
     return t
 
@@ -79,7 +80,10 @@ def t_HEX(t):
 
 
 def t_INTEGER(t):
-    r'\d+'
+    r'\d+(?![a-z])$'
+    # if t.lexpos + len(t.value) < t.lexer.lexlen and str.isalpha(t.lexer.lexdata[t.lexpos + len(t.value)]):
+    #     t_error(t)
+    #     return
     t.value = int(t.value)
     return t
 
