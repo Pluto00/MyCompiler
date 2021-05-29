@@ -1,0 +1,139 @@
+body {
+    margin: 0;
+    background-color:#232228;
+    color: #eeeeee;
+}
+
+h1, h2 {
+    margin: 0;
+}
+
+div {
+    display: flex;
+}
+
+.index {
+    flex-direction: column;
+}
+
+.nav {
+    position: fixed;
+    top: 0;
+    height: 76px;
+    width: 100%;
+    padding: 0 16px;
+    box-sizing: border-box;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #000000;
+}
+
+.nav h1 {
+    font-size: 24px;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.team {
+    margin-right: 16px;
+}
+
+.main {
+    justify-content: space-between;
+    margin-top: 76px;
+    padding: 32px;
+}
+
+.input_container {
+    position: fixed;
+    flex-direction: column;
+    width: 48%;
+    padding: 16px 32px;
+    box-sizing: border-box;
+    background:
+        linear-gradient(250deg, #4d381d, rgba(255,0,0,0) 30.71%),
+        linear-gradient(127deg, #161e1a, rgba(0,255,0,0) 70.71%),
+        linear-gradient(336deg, #1b1a1f, rgba(0,0,255,0) 70.71%);
+    box-shadow: 4px 8px 16px #19181d;
+    border-radius: 15px;
+}
+
+.progress {
+    height: 64px;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.item {
+    /* width: 72px; */
+    padding: 8px 16px;
+    /* border: 1px solid #ffffff; */
+    background-color: #20bfa9;
+    border-radius: 25px;
+}
+
+.line {
+    flex-grow: 1;
+    height: 1px;
+    background-color:  #20bfa9;
+}
+
+.input {
+    margin-top: 16px;
+    outline: none;
+    font-size: 18px;
+}
+
+.btn_container {
+    justify-content: center;
+    margin-top: 16px;
+}
+
+.btn {
+    width: 96px;
+    height: 48px;
+    border: none;
+    color: #eeeeee;
+    border-radius: 25px;
+    outline: none;
+    background:
+      linear-gradient(217deg, #2b2c4c, rgba(255,0,0,0) 70.71%),
+      linear-gradient(127deg, #242430, rgba(0,255,0,0) 70.71%),
+      linear-gradient(336deg, #23232d, rgba(0,0,255,0) 70.71%);
+}
+
+.output_container {
+    flex-direction: column;
+    width: 48%;
+    padding: 16px 32px;
+    margin-left: 52%;
+    box-sizing: border-box;
+    background:
+        linear-gradient(250deg, #164241, rgba(255,0,0,0) 30.71%),
+        linear-gradient(127deg, #201c25, rgba(0,255,0,0) 70.71%),
+        linear-gradient(336deg, #1e2126, rgba(0,0,255,0) 70.71%);
+    box-shadow: 4px 8px 16px #19181d;
+    border-radius: 15px;
+}
+
+.block {
+    flex-direction: column;
+    margin-top: 16px;
+}
+
+.block-hide {
+    display: none;
+}
+
+.output {
+    margin-top: 8px;
+}
+
+.symbol {
+    margin-top: 8px;
+}
+
+.block h2 {
+    color:  #20bfa9;
+}

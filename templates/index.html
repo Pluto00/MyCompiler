@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <title>编译原理实践</title>
+</head>
+<body>
+<div class="index">
+    <div class="nav">
+        <div class="left">
+            <h1>编译原理实践</h1>
+        </div>
+        <div class="right">
+            <span class="team">队名：编译原理去哪儿</span>
+            <span class="member">成员：孙棚飞 黄浩宇 汤千禧 张晓涓</span>
+        </div>
+    </div>
+    <div class="main">
+        <div class="input_container">
+            <div class="progress">
+                <div class="item">词法分析</div>
+                <div class="line"></div>
+                <div class="item">语法分析</div>
+                <div class="line"></div>
+                <div class="item">语法制导与中间代码生成</div>
+            </div>
+            <textarea class="input" cols="30" rows="20"></textarea>
+            <div class="btn_container">
+                <button class="btn" onclick="next()" style="cursor:pointer;">下一步</button>
+            </div>
+        </div>
+        <div class="output_container">
+            <div class="block word block-hide">
+                <h2>词法分析输出</h2>
+                <textarea class="output" cols="30" rows="25"></textarea>
+                <h2>符号表输出</h2>
+                <textarea class="symbol" cols="30" rows="10"></textarea>
+            </div>
+            <div class="block grammar block-hide">
+                <h2>语法分析输出</h2>
+                <textarea class="output" cols="30" rows="20"></textarea>
+            </div>
+            <div class="block code block-hide">
+                <h2>语法制导与中间代码生成</h2>
+                <textarea class="output" cols="30" rows="20"></textarea>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+
+<script>
+    localStorage.setItem('progress', 0);
+
+    function next() {
+        console.log(document.getElementsByClassName('input')[0].value);
+        console.log(localStorage.getItem('progress'));
+        let progress = localStorage.getItem('progress');
+        // if (progress == 0) {
+        //词法分析
+        fetch('/api/lexer/code', {
+            method: 'POST',
+            headers: {
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify({
+                code: document.getElementsByClassName('input')[0].value
+            })
+        })
+            .then(res => res.json())
+            .then(res => {
+                console.log(res);
+                document.getElementsByClassName('word')[0].classList.remove('block-hide');
+                // 把返回数据写到下面
+                document.getElementsByClassName('output')[0].value = res.output;
+                document.getElementsByClassName('symbol')[0].value = res.symbol;
+                progress++;
+                localStorage.setItem('progress', progress)
+            })
+            .catch((error) => {
+                alert(error)
+            })
+        // } else if (progress == 1) {
+        //     // 语法分析
+        //     fetch('http://httpbin.org/post', {
+        //         method: 'POST',
+        //         headers: {
+        //             'content-type': 'application/json'
+        //         },
+        //         body: JSON.stringify({
+        //             code: document.getElementsByClassName('input')[0].value
+        //         })
+        //     })
+        //         .then((res) => {
+        //             console.log(res);
+        //             document.getElementsByClassName('grammar')[0].classList.remove('block-hide');
+        //             // 把返回数据写到下面
+        //             document.getElementsByClassName('output')[1].value = '语法分析输出';
+        //             progress++;
+        //             localStorage.setItem('progress', progress)
+        //         })
+        //         .catch((error) => {
+        //             alert(error)
+        //         })
+        // } else if (progress == 2) {
+        //     // 中间代码
+        //     fetch('http://httpbin.org/post', {
+        //         method: 'POST',
+        //         headers: {
+        //             'content-type': 'application/json'
+        //         },
+        //         body: JSON.stringify({
+        //             code: document.getElementsByClassName('input')[0].value
+        //         })
+        //     })
+        //         .then((res) => {
+        //             console.log(res);
+        //             document.getElementsByClassName('code')[0].classList.remove('block-hide');
+        //             // 把返回数据写到下面
+        //             document.getElementsByClassName('output')[2].value = '中间代码分析输出';
+        //             progress++;
+        //             localStorage.setItem('progress', progress);
+        //         })
+        //         .catch((error) => {
+        //             alert(error);
+        //         })
+        // }
+
+
+    }
+</script>
+
+</html>
