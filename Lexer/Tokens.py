@@ -99,7 +99,7 @@ class IdentifierElement(LexicalElement):
         self.value = val
 
     def __repr__(self):
-        return f"<{self.value}>"
+        return f"<id, {self.value}>"
 
 
 class LineFeedElement(LexicalElement):

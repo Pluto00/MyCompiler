@@ -36,13 +36,13 @@ class Utils:
     @staticmethod
     def ParseTokens(tokens):
         lineno = 1
-        output = "line 1:"
+        output = "1:"
         kws = [kw.value for kw in KeyWordType]
         symbol_table = set()
         for token in tokens:
             if type(token) == LineFeedElement:
                 lineno += 1
-                output += '\nline %d:' % lineno
+                output += '\n%d:' % lineno
             else:
                 output += ' %s' % token.describe()
             if type(token) == IdentifierElement:

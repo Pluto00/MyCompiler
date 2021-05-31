@@ -101,7 +101,7 @@ class Lexer:
                 if Utils.is_alpha(c):
                     success = False
                 break
-            c = self.pre_read(num)
+            c = self.pre_read()
         if not success:
             self.tokens.append(Utils.GetErrorElement(self.lineno, "invalid number"))
             self.readline()
@@ -120,8 +120,11 @@ class Lexer:
             c = self.pre_read(ans)
         if c == -1:
             return c
-        ans = ans.lower()
-        self.tokens.append(Utils.StringToKeyWordMap.get(ans) or Utils.StringToIdentifierElement(ans))
+        if c in "$@~":  # 不会出现在标识符后面的字符
+            self.tokens.append(Utils.GetErrorElement(self.lineno, "invalid identifier"))
+        else:
+            ans = ans.lower()
+            self.tokens.append(Utils.StringToKeyWordMap.get(ans) or Utils.StringToIdentifierElement(ans))
         return c
 
     def analyse(self):
@@ -224,6 +227,7 @@ class Lexer:
     def parse(self, code_file):
         # 初始化参数
         self.code_input = code_file
+        self.lineno = 0
         self.readline()
         self.tokens = []
         # 开始分析
