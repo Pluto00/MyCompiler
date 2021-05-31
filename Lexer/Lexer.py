@@ -1,26 +1,16 @@
+from .Utils import Utils
+
+
 class Lexer:
     words = ["switch", "case", "do", "else", "for", "goto", "if", "then", "until", "while", "continue", "break"]
 
-    def __init__(self, code_file):
-        self.code_input = code_file
+    def __init__(self):
+        self.code_input = None
         self.lineno = 0
         self.line = None
         self.line_len = None
         self.line_pos = None
-        self.symbol_table = None
-        self.output = ""
-
-    @staticmethod
-    def is_alpha(c):
-        return str.isalpha(c)
-
-    @staticmethod
-    def is_digit(c):
-        return str.isdigit(c)
-
-    @staticmethod
-    def is_Hex(c):
-        return c in 'xX'
+        self.tokens = []
 
     def read(self):
         if self.line_pos >= self.line_len:
@@ -35,319 +25,213 @@ class Lexer:
         self.line_len = len(self.line)
         self.line_pos = -1
         self.lineno += 1
-        if self.lineno != 1:
-            self.log('', end='\n')
-        self.log("line %d: " % self.lineno)
-
-    def log(self, msg, end=' '):
-        print(msg, end=end)
-        self.output += (msg + end)
+        self.tokens.append(Utils.GetLineFeedElement())
 
     def pre_end(self, c):
-        if Lexer.is_digit(c):
-            self.log("<num," + c + ">")
-        elif Lexer.is_alpha(c) or c == "_":
-            self.log("<id," + c + ">")
+        if not c:
+            return
+        if Utils.is_digit(c):
+            ele = Utils.StringToIntegerLiteral(c)
+        elif Utils.is_alpha(c) or c == "_":
+            ele = Utils.StringToIdentifierElement(c)
         else:
-            self.log("<" + c + ">")
+            ele = Utils.StringToNonWordMap.get(c)
+        if ele:
+            self.tokens.append(ele)
+
+    def pre_read(self, c=None):
+        ta = self.read()
+        if ta == -1:
+            self.pre_end(c)
+        return ta
+
+    def __match_non_word__(self, cur, forward):
+        c = self.pre_read(cur)
+        if c == -1:
+            return c
+        if c in forward:
+            cur += c
+            c = self.pre_read()
+        if cur == '//':  # 处理注释
+            self.readline()
+            c = self.pre_read()
+        else:
+            self.tokens.append(Utils.StringToNonWordMap[cur])
+        return c
+
+    def __match_string__(self):
+        t = ""
+        success = True
+        while True:
+            c = self.read()
+            if c == -1 or c == '\n':  # 错误，读入下一行
+                self.tokens.append(Utils.GetErrorElement(self.lineno, "invalid string"))
+                self.readline()
+                success = False
+                break
+            if c != '"':
+                t += c
+            else:
+                break
+        if success:
+            self.tokens.append(Utils.StringToStringLiteral(t))
+        return self.pre_read()
+
+    def __match_number__(self, c):
+        success = True
+        num = c
+        base = 10
+        c = self.pre_read(c)
+        if c == -1:
+            return c
+        if num == '0' and Utils.is_Hex(c):
+            num += c
+            base = 16
+            c = self.read()
+        elif num == '0' and Utils.is_digit(c):
+            base = 8
+        while c != -1:
+            if base == 16 and (Utils.is_digit(c) or 'a' < c < 'f' or 'A' < c < 'F'):
+                num += c
+            elif base == 10 and (Utils.is_digit(c) or c == '.'):
+                num += c
+            elif base == 8 and (Utils.is_digit(c) and '0' < c < '9'):
+                num += c
+            else:
+                if Utils.is_alpha(c):
+                    success = False
+                break
+            c = self.pre_read(num)
+        if not success:
+            self.tokens.append(Utils.GetErrorElement(self.lineno, "invalid number"))
+            self.readline()
+            return self.pre_read()
+        if '.' in num and base == 10:  # 小数
+            self.tokens.append(Utils.StringToFloatLiteral(num))
+        else:  # 整数
+            self.tokens.append(Utils.StringToIntegerLiteral(num, base))
+        return c
+
+    def __match__identifier__(self, c):  # 匹配标识符（也有可能是关键字）
+        ans = c
+        c = self.pre_read()
+        while c != -1 and (c == '_' or Utils.is_digit(c) or Utils.is_alpha(c)):
+            ans += c
+            c = self.pre_read(ans)
+        if c == -1:
+            return c
+        ans = ans.lower()
+        self.tokens.append(Utils.StringToKeyWordMap.get(ans) or Utils.StringToIdentifierElement(ans))
+        return c
 
     def analyse(self):
-        self.symbol_table = set()
-        self.readline()
         c = self.read()
-        if c == -1:
-            return
         while c != -1:
-            if c == '\uFFFF':
-                break
-            valid = False
-            while not valid:
-                if c == ' ' or c == '\t':
-                    c = self.read()
-                    if c == -1:
-                        return
-                elif c == '\n' or c == '\r':
+            while True:  # 处理非法字符，空白和换行
+                if c == '\uFFFF':  # INVALID CHARACTER
+                    return
+                elif c == ' ' or c == '\t':  # 空白，跳过
+                    pass
+                elif c == '\n' or c == '\r':  # 换行，读入下一行
                     self.readline()
-                    c = self.read()
-                    if c == -1:
-                        return
-                else:
+                else:  # 其他的字符进入匹配
                     valid = True
-            if c == '-':
+                    break
                 c = self.read()
                 if c == -1:
-                    self.pre_end(c)
                     return
-                if c == '-':
-                    self.log("<-->")
-                    c = self.read()
-                elif c == '=':
-                    self.log("<-=>")
-                    c = self.read()
-                else:
-                    self.log("<->")
+            if c == '-':
+                c = self.__match_non_word__(c, ['-', '='])
+                if c == -1:
+                    return
                 valid = False
             elif c == '+':
-                c = self.read()
+                c = self.__match_non_word__(c, ['+', '='])
                 if c == -1:
-                    self.pre_end(c)
                     return
-                if c == '+':
-                    self.log("<++>")
-                    c = self.read()
-                elif c == '=':
-                    self.log("<+=>")
-                    c = self.read()
-                else:
-                    self.log("<+>")
                 valid = False
             elif c == '*':
-                c = self.read()
+                c = self.__match_non_word__(c, ['='])
                 if c == -1:
-                    self.pre_end(c)
                     return
-                elif c == '=':
-                    self.log("<*=>")
-                    c = self.read()
-                else:
-                    self.log("<*>")
                 valid = False
             elif c == '/':
-                c = self.read()
+                c = self.__match_non_word__(c, ['=', '/'])
                 if c == -1:
-                    self.pre_end(c)
                     return
-                elif c == '=':
-                    self.log("</=>")
-                    c = self.read()
-                    if c == -1:
-                        self.pre_end(c)
-                        return
-                elif c == '/':
-                    self.readline()
-                    c = self.read()
-                    if c == -1:
-                        self.pre_end(c)
-                        return
-                else:
-                    self.log("</>")
                 valid = False
             elif c == '|':
-                c = self.read()
+                c = self.__match_non_word__(c, ['|'])
                 if c == -1:
-                    self.pre_end(c)
                     return
-                if c == '|':
-                    self.log("<||>")
-                    c = self.read()
-                    if c == -1:
-                        self.pre_end(c)
-                else:
-                    self.log("<|>")
                 valid = False
             elif c == '&':
-                c = self.read()
+                c = self.__match_non_word__(c, ['&'])
                 if c == -1:
-                    self.pre_end(c)
                     return
-                if c == '&':
-                    self.log("<&&>")
-                    c = self.read()
-                    if c == -1:
-                        self.pre_end(c)
-                else:
-                    self.log("<&>")
                 valid = False
             elif c == '<':
-                c = self.read()
+                c = self.__match_non_word__(c, ['=', '>', '<'])
                 if c == -1:
-                    self.pre_end(c)
                     return
-                if c == '=':
-                    self.log("<<=>")
-                    c = self.read()
-                    if c == -1:
-                        self.pre_end(c)
-                        return
-                elif c == '>':
-                    self.log("<<>>")
-                    c = self.read()
-                    if c == -1:
-                        self.pre_end(c)
-                        return
-                elif c == '<':
-                    self.log("<<<>")
-                    c = self.read()
-                    if c == -1:
-                        self.pre_end(c)
-                        return
-                else:
-                    self.log("<<>")
                 valid = False
             elif c == '>':
-                c = self.read()
+                c = self.__match_non_word__(c, ['=', '>'])
                 if c == -1:
-                    self.pre_end(c)
                     return
-                if c == '=':
-                    self.log("<>=>")
-                    c = self.read()
-                    if c == -1:
-                        self.pre_end(c)
-                        return
-                elif c == '>':
-                    self.log("<>>>")
-                    c = self.read()
-                    if c == -1:
-                        self.pre_end(c)
-                        return
-                else:
-                    self.log("<<>")
-            elif c == ':':
-                c = self.read()
-                if c == -1:
-                    self.pre_end(c)
-                    return
-                if c == '=':
-                    self.log("<:=>")
-                    c = self.read()
-                    if c == -1:
-                        self.pre_end(c)
-                        return
-                else:
-                    self.log('<:>')
                 valid = False
-            elif c == '"':
-                t = "\""
-                success = True
-                while True:
-                    c = self.read()
-                    if c == -1:
-                        self.log("error line %d: invalid string" % self.lineno)
-                        return
-                    if c == '\n':
-                        self.log("error line %d: invalid string" % self.lineno)
-                        self.readline()
-                        success = False
-                        break
-                    elif c != '"':
-                        t += c
-                    else:
-                        t += "\""
-                        break
-                if success:
-                    self.log("<string, %s>" % t)
-                c = self.read()
+            elif c == ':':
+                c = self.__match_non_word__(c, ['='])
                 if c == -1:
                     return
                 valid = False
             elif c == '!':
-                c = self.read()
+                c = self.__match_non_word__(c, ['='])
                 if c == -1:
-                    self.pre_end(c)
                     return
-                if c == '=':
-                    self.log("<!=>")
-                    c = self.read()
-                    if c == -1:
-                        self.pre_end(c)
-                        return
-                else:
-                    self.log("<!>")
                 valid = False
             elif c == '=':
-                c = self.read()
+                c = self.__match_non_word__(c, ['='])
                 if c == -1:
-                    self.pre_end(c)
                     return
-                if c == '=':
-                    self.log("<==>")
-                    c = self.read()
-                    if c == -1:
-                        self.pre_end(c)
-                        return
-                else:
-                    self.log("<=>")
                 valid = False
             elif c in ';()[]{},^':
-                self.log("<%c>" % c)
-                c = self.read()
+                c = self.__match_non_word__(c, [])
                 if c == -1:
                     return
                 valid = False
-            else:
-                pass
+            elif c == '"':
+                c = self.__match_string__()
+                if c == -1:
+                    return
+                valid = False
             if valid:
-                if Lexer.is_digit(c):
-                    success = True
-                    ansNum = c
-                    ansBase = 10
-                    c = self.read()
+                if Utils.is_digit(c):
+                    c = self.__match_number__(c)
                     if c == -1:
-                        self.pre_end(c)
                         return
-                    if ansNum == '0' and Lexer.is_Hex(c):
-                        ansNum += c
-                        ansBase = 16
-                        c = self.read()
-                    elif ansNum == '0' and Lexer.is_digit(c):
-                        ansBase = 8
-                    while c != -1:
-                        if ansBase == 16 and (Lexer.is_digit(c) or 'a' < c < 'f' or 'A' < c < 'F'):
-                            ansNum += c
-                        elif ansBase == 10 and (Lexer.is_digit(c) or c == '.'):
-                            ansNum += c
-                        elif ansBase == 8 and (Lexer.is_digit(c) and '0' < c < '9'):
-                            ansNum += c
-                        else:
-                            if Lexer.is_alpha(c):
-                                success = False
-                            break
-                        c = self.read()
-                    if not success:
-                        self.log("error line %d: invalid number" % self.lineno)
-                        self.readline()
-                        c = self.read()
-                        if c == -1:
-                            return
-                    elif c == -1:
-                        self.pre_end(c)
-                        return
-                    elif '.' in ansNum and ansBase == 10:
-                        ansNum = float(ansNum)
-                        self.log("<float, %f>" % ansNum)
-                    else:
-                        ansNum = int(ansNum, ansBase)
-                        self.log("<int, %d>" % ansNum)
-
-                elif Lexer.is_alpha(c) or c == '_':
-                    ans = c
-                    c = self.read()
-                    while c != -1 and (c == '_' or Lexer.is_digit(c) or Lexer.is_alpha(c)):
-                        ans += c
-                        c = self.read()
+                elif Utils.is_alpha(c) or c == '_':
+                    c = self.__match__identifier__(c)
                     if c == -1:
-                        self.pre_end(c)
                         return
-                    ans = ans.lower()
-                    if ans in self.words:
-                        self.log("<%s>" % ans)
-                    else:
-                        self.symbol_table.add(ans)
-                        self.log("<id, %s>" % ans)
                 else:
-                    self.log("error line %d: invalid identifier" % self.lineno)
+                    self.tokens.append(Utils.GetErrorElement(self.lineno, "invalid identifier"))
                     self.readline()
-                    c = self.read()
+                    c = self.pre_read()
                     if c == -1:
-                        return
+                        return c
 
-    def parse(self):
+    def parse(self, code_file):
+        # 初始化参数
+        self.code_input = code_file
+        self.readline()
+        self.tokens = []
+        # 开始分析
         self.analyse()
-        return {'output': self.output, 'symbol': ',\t'.join(self.words + list(self.symbol_table))}
-        # print()
-        # print(self.words, self.symbol_table)
+        # 返回解析结果
+        return Utils.ParseTokens(self.tokens)
 
 
 if __name__ == '__main__':
-    Lexer(open('code.mc', encoding='utf-8')).parse()
+    lex = Lexer()
+    print(lex.parse(open('../code.mc', encoding='utf-8')))
