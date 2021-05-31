@@ -20,15 +20,17 @@
     <div class="main">
         <div class="input_container">
             <div class="progress">
-                <div class="item">词法分析</div>
+                <div class="item" id="item-1" style="background-color:#20bfa9; cursor:pointer;" onclick="select(1)">
+                    词法分析
+                </div>
                 <div class="line"></div>
-                <div class="item">语法分析</div>
+                <div class="item" id="item-2" onclick="select(2)" style="cursor:pointer;">语法分析</div>
                 <div class="line"></div>
-                <div class="item">语法制导与中间代码生成</div>
+                <div class="item" id="item-3" onclick="select(3)" style="cursor:pointer;">语法制导与中间代码生成</div>
             </div>
             <textarea class="input" cols="30" rows="20"></textarea>
             <div class="btn_container">
-                <button class="btn" onclick="next()" style="cursor:pointer;">下一步</button>
+                <button class="btn" onclick="submit()" style="cursor:pointer;">提交代码</button>
             </div>
         </div>
         <div class="output_container">
@@ -36,7 +38,7 @@
                 <h2>词法分析输出</h2>
                 <textarea class="output" cols="30" rows="25"></textarea>
                 <h2>符号表输出</h2>
-                <textarea class="symbol" cols="30" rows="10"></textarea>
+                <textarea class="symbol" cols="30" rows="5"></textarea>
             </div>
             <div class="block grammar block-hide">
                 <h2>语法分析输出</h2>
@@ -52,83 +54,91 @@
 </body>
 
 <script>
-    localStorage.setItem('progress', 0);
 
-    function next() {
+    localStorage.setItem('progress', 1);
+
+    function select(no) {
+        var selectColor = "#20bfa9";
+        var notSelectColor = "#a6aca4";
+        for (i = 1; i <= 3; i++) {
+            if (i == no) {
+                document.getElementById("item-" + i).style.background = selectColor;
+            } else {
+                document.getElementById("item-" + i).style.background = notSelectColor;
+            }
+        }
+        localStorage.setItem('progress', no)
+    }
+
+    function submit() {
         console.log(document.getElementsByClassName('input')[0].value);
         console.log(localStorage.getItem('progress'));
         let progress = localStorage.getItem('progress');
-        // if (progress == 0) {
-        //词法分析
-        fetch('/api/lexer/code', {
-            method: 'POST',
-            headers: {
-                'content-type': 'application/json'
-            },
-            body: JSON.stringify({
-                code: document.getElementsByClassName('input')[0].value
+        if (progress == 1) {
+            //词法分析
+            fetch('/api/lexer/code', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json'
+                },
+                body: JSON.stringify({
+                    code: document.getElementsByClassName('input')[0].value
+                })
             })
-        })
-            .then(res => res.json())
-            .then(res => {
-                console.log(res);
-                document.getElementsByClassName('word')[0].classList.remove('block-hide');
-                // 把返回数据写到下面
-                document.getElementsByClassName('output')[0].value = res.output;
-                document.getElementsByClassName('symbol')[0].value = res.symbol;
-                progress++;
-                localStorage.setItem('progress', progress)
+                .then(res => res.json())
+                .then(res => {
+                    console.log(res);
+                    document.getElementsByClassName('word')[0].classList.remove('block-hide');
+                    // 把返回数据写到下面
+                    document.getElementsByClassName('output')[0].value = res.output;
+                    document.getElementsByClassName('symbol')[0].value = res.symbol;
+                })
+                .catch((error) => {
+                    alert(error)
+                })
+        } else if (progress == 2) {
+            // 语法分析
+            fetch('/api/syntax/code', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json'
+                },
+                body: JSON.stringify({
+                    code: document.getElementsByClassName('input')[0].value
+                })
             })
-            .catch((error) => {
-                alert(error)
+                .then(res => res.json())
+                .then(res => {
+                    console.log(res);
+                    document.getElementsByClassName('grammar')[0].classList.remove('block-hide');
+                    // 把返回数据写到下面
+                    document.getElementsByClassName('output')[1].value = '语法分析输出';
+                })
+                .catch((error) => {
+                    alert(error)
+                })
+        } else if (progress == 3) {
+            // 中间代码
+            fetch('/api/pass', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json'
+                },
+                body: JSON.stringify({
+                    code: document.getElementsByClassName('input')[0].value
+                })
             })
-        // } else if (progress == 1) {
-        //     // 语法分析
-        //     fetch('http://httpbin.org/post', {
-        //         method: 'POST',
-        //         headers: {
-        //             'content-type': 'application/json'
-        //         },
-        //         body: JSON.stringify({
-        //             code: document.getElementsByClassName('input')[0].value
-        //         })
-        //     })
-        //         .then((res) => {
-        //             console.log(res);
-        //             document.getElementsByClassName('grammar')[0].classList.remove('block-hide');
-        //             // 把返回数据写到下面
-        //             document.getElementsByClassName('output')[1].value = '语法分析输出';
-        //             progress++;
-        //             localStorage.setItem('progress', progress)
-        //         })
-        //         .catch((error) => {
-        //             alert(error)
-        //         })
-        // } else if (progress == 2) {
-        //     // 中间代码
-        //     fetch('http://httpbin.org/post', {
-        //         method: 'POST',
-        //         headers: {
-        //             'content-type': 'application/json'
-        //         },
-        //         body: JSON.stringify({
-        //             code: document.getElementsByClassName('input')[0].value
-        //         })
-        //     })
-        //         .then((res) => {
-        //             console.log(res);
-        //             document.getElementsByClassName('code')[0].classList.remove('block-hide');
-        //             // 把返回数据写到下面
-        //             document.getElementsByClassName('output')[2].value = '中间代码分析输出';
-        //             progress++;
-        //             localStorage.setItem('progress', progress);
-        //         })
-        //         .catch((error) => {
-        //             alert(error);
-        //         })
-        // }
-
-
+                .then(res => res.json())
+                .then(res => {
+                    console.log(res);
+                    document.getElementsByClassName('code')[0].classList.remove('block-hide');
+                    // 把返回数据写到下面
+                    document.getElementsByClassName('output')[2].value = '中间代码分析输出';
+                })
+                .catch((error) => {
+                    alert(error);
+                })
+        }
     }
 </script>
 

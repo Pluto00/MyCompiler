@@ -1,7 +1,8 @@
 from flask import Flask, request, render_template, jsonify
-from Lexer.Lexer import Lexer
+from Lexer import Lexer
 
 app = Flask(__name__)
+lex = Lexer()
 
 
 @app.route("/")
@@ -15,7 +16,7 @@ def post_lexer_code():
     with open('code.cache', 'w', encoding='utf-8') as fh:
         fh.write(code)
     with open('code.cache', encoding='utf-8') as fh:
-        response = Lexer(fh).parse()
+        response = lex.parse(fh)
     return jsonify(response)
 
 
