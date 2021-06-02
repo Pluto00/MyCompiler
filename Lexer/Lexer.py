@@ -2,7 +2,9 @@ from .Utils import Utils
 
 
 class Lexer:
-    words = ["switch", "case", "do", "else", "for", "goto", "if", "then", "until", "while", "continue", "break"]
+    """
+    词法分析器，读取代码文件输出，解析此词法单元
+    """
 
     def __init__(self):
         self.code_input = None
@@ -10,9 +12,9 @@ class Lexer:
         self.line = None
         self.line_len = None
         self.line_pos = None
-        self.tokens = []
+        self.tokens = []  # 保存解析到的词法单元
 
-    def read(self):
+    def read(self):  # 读取下一个字符
         if self.line_pos >= self.line_len:
             self.readline()
         self.line_pos += 1
@@ -20,14 +22,14 @@ class Lexer:
             return -1
         return self.line[self.line_pos]
 
-    def readline(self):
+    def readline(self):  # 读取下一行
         self.line = self.code_input.readline()
         self.line_len = len(self.line)
         self.line_pos = -1
         self.lineno += 1
         self.tokens.append(Utils.GetLineFeedElement())
 
-    def pre_end(self, c):
+    def pre_end(self, c):  # 预读终止
         if not c:
             return
         if Utils.is_digit(c):
@@ -39,13 +41,13 @@ class Lexer:
         if ele:
             self.tokens.append(ele)
 
-    def pre_read(self, c=None):
+    def pre_read(self, c=None):  # 预读下一个字符
         ta = self.read()
         if ta == -1:
             self.pre_end(c)
         return ta
 
-    def __match_non_word__(self, cur, forward):
+    def __match_non_word__(self, cur, forward):  # 匹配非关键字
         c = self.pre_read(cur)
         if c == -1:
             return c
@@ -59,7 +61,7 @@ class Lexer:
             self.tokens.append(Utils.StringToNonWordMap[cur])
         return c
 
-    def __match_string__(self):
+    def __match_string__(self):  # 匹配字符串
         t = ""
         success = True
         while True:
@@ -77,7 +79,7 @@ class Lexer:
             self.tokens.append(Utils.StringToStringLiteral(t))
         return self.pre_read()
 
-    def __match_number__(self, c):
+    def __match_number__(self, c):  # 匹配数字
         success = True
         num = c
         base = 10
@@ -127,7 +129,7 @@ class Lexer:
             self.tokens.append(Utils.StringToKeyWordMap.get(ans) or Utils.StringToIdentifierElement(ans))
         return c
 
-    def analyse(self):
+    def analyse(self):  # 词法分析过程
         c = self.read()
         while c != -1:
             while True:  # 处理非法字符，空白和换行
@@ -224,7 +226,7 @@ class Lexer:
                     if c == -1:
                         return c
 
-    def parse(self, code_file):
+    def parse(self, code_file):  # 杜文文件输入
         # 初始化参数
         self.code_input = code_file
         self.lineno = 0
