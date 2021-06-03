@@ -1,4 +1,4 @@
-from .Utils import Utils
+from Utils import Utils
 
 
 class Lexer:
@@ -240,4 +240,4 @@ class Lexer:
 
 if __name__ == '__main__':
     lex = Lexer()
-    print(lex.parse(open('../code.mc', encoding='utf-8')))
+    print(lex.parse(open('resource/code.mc', encoding='utf-8')))
