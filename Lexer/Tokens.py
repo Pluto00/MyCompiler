@@ -25,6 +25,7 @@ class KeyWordType(LexicalElement, Enum):
     Continue = "continue"
     Break = "break"
     Goto = "goto"
+    Program = "program"
 
 
 class NonWordType(LexicalElement, Enum):
@@ -61,6 +62,7 @@ class NonWordType(LexicalElement, Enum):
     LogicalOr = "||"
     LogicalNot = "!"
     LogicalNotEqual = "!="
+    LogicalEqual = "=="
     BinaryXor = "^"
     BinaryAND = "&"
     BinaryOr = "|"
@@ -71,6 +73,9 @@ class NonWordType(LexicalElement, Enum):
 class LiteralElement(LexicalElement):
     def __repr__(self):
         return f"<{self.name}, {self.value}>"
+
+    def get(self):
+        return self.name
 
 
 class IntegerLiteral(LiteralElement):
@@ -96,10 +101,14 @@ class StringLiteral(LiteralElement):
 
 class IdentifierElement(LexicalElement):
     def __init__(self, val):
+        self.name = "id"
         self.value = val
 
     def __repr__(self):
-        return f"<id, {self.value}>"
+        return f"<{self.name}, {self.value}>"
+
+    def get(self):
+        return self.name
 
 
 class LineFeedElement(LexicalElement):
@@ -109,6 +118,9 @@ class LineFeedElement(LexicalElement):
     def __repr__(self):
         return '\n'
 
+    def get(self):
+        return None
+
 
 class ErrorElement(LexicalElement):
     def __init__(self, lineno, reason):
@@ -117,3 +129,6 @@ class ErrorElement(LexicalElement):
 
     def __repr__(self):
         return "error line %d: %s" % (self.lineno, self.reason)
+
+    def get(self):
+        return None
