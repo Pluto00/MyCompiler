@@ -6,6 +6,8 @@ class Utils:
     StringToNonWordMap = {nw.value: nw for nw in NonWordType}
     KeyWordToStringMap = {kw: kw.value for kw in KeyWordType}
     StringToKeyWordMap = {kw.value: kw for kw in KeyWordType}
+    TerminalList = list(StringToNonWordMap.keys()) + list(StringToKeyWordMap.keys()) + ['id', 'string', 'integer',
+                                                                                        'float', 'ε', '$']
 
     @staticmethod
     def StringToStringLiteral(s):
