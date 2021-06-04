@@ -73,7 +73,7 @@
     function submit() {
         console.log(document.getElementsByClassName('input')[0].value);
         console.log(localStorage.getItem('progress'));
-        let progress = localStorage.getItem('progress');
+        let progress = parseInt(localStorage.getItem('progress'));
         if (progress == 1) {
             //词法分析
             fetch('/api/lexer/code', {
@@ -92,13 +92,14 @@
                     // 把返回数据写到下面
                     document.getElementsByClassName('output')[0].value = res.output;
                     document.getElementsByClassName('symbol')[0].value = res.symbol;
+                    select(progress + 1);
                 })
                 .catch((error) => {
                     alert(error)
                 })
         } else if (progress == 2) {
             // 语法分析
-            fetch('/api/syntax/code', {
+            fetch('/api/syntax/analyzer/code', {
                 method: 'POST',
                 headers: {
                     'content-type': 'application/json'
@@ -112,7 +113,8 @@
                     console.log(res);
                     document.getElementsByClassName('grammar')[0].classList.remove('block-hide');
                     // 把返回数据写到下面
-                    document.getElementsByClassName('output')[1].value = '语法分析输出';
+                    document.getElementsByClassName('output')[1].value = res.output;
+
                 })
                 .catch((error) => {
                     alert(error)
@@ -134,6 +136,7 @@
                     document.getElementsByClassName('code')[0].classList.remove('block-hide');
                     // 把返回数据写到下面
                     document.getElementsByClassName('output')[2].value = '中间代码分析输出';
+
                 })
                 .catch((error) => {
                     alert(error);
