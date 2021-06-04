@@ -1,0 +1,37 @@
+S' -> S
+S -> program id { Stmt }
+Stmt -> Stmt Assign ;
+Stmt -> Stmt IfStmt
+Stmt -> Stmt WhileStmt
+Stmt -> ε
+Assign -> id Postfix = Expr
+Assign -> id Postfix := Expr
+Assign -> id Postfix += Expr
+Assign -> id Postfix -= Expr
+Assign -> id Postfix *= Expr
+Assign -> id Postfix /= Expr
+IfStmt -> if ( Expr ) { Stmt }
+IfStmt -> if ( Expr ) { Stmt } else { Stmt }
+WhileStmt -> while ( Expr ) { Stmt }
+Expr -> Expr + Expr
+Expr -> Expr - Expr
+Expr -> Expr * Expr
+Expr -> Expr / Expr
+Expr -> Expr ^ Expr
+Expr -> Expr > Expr
+Expr -> Expr < Expr
+Expr -> ! Expr
+Expr -> Expr && Expr
+Expr -> Expr || Expr
+Expr -> Expr == Expr
+Expr -> Expr >= Expr
+Expr -> Expr <= Expr
+Expr -> Expr != Expr
+Expr -> Factor
+Factor -> id Postfix
+Factor -> Number
+Factor -> ( Expr )
+Number -> integer
+Number -> float
+Postfix -> [ Expr ] Postfix
+Postfix -> ε
