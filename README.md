@@ -14,3 +14,14 @@
 
 2. `python app.py`
 
+## debug
+
+`python ./SyntaxAnalyzer/SLR.py` -> `./resource/debug_info.xls`
+
+## screen shots
+
+![web_ui](https://raw.githubusercontent.com/Pluto00/MyCompiler/master/screenshots/web_ui.png)
+
+![debug_info_1](https://raw.githubusercontent.com/Pluto00/MyCompiler/master/screenshots/debug_info_1.png)
+
+![debug_info_2](https://raw.githubusercontent.com/Pluto00/MyCompiler/master/screenshots/debug_info_2.png)
