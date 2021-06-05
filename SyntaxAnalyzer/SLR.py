@@ -93,56 +93,70 @@ class SLRTable:
                             self.action[st][self.__terminals.index(f)].append('r' + str(pid))
             st += 1
 
+    def __compare(self, x1, x2):
+        print(x1, x2)
+        op_list = ['^', '*', '/', '+', '-']
+        return x1 in op_list and x2 in op_list and op_list.index(x1) < op_list.index(x2)
+
     def analyze(self, code_file):
-        result = {'stack': [], 'input': [], 'operations': []}
+        result = {'stack': [], 'input': [], 'operations': [], 'matched': [[]]}  # 输出
         if type(code_file) == str:
             code_file = open(code_file, encoding='utf-8')
-        self.lexer.parse(code_file)
+        self.lexer.parse(code_file)  # 调用词法分析器分析代码文件，获取词法单元
         top = 0
         w = []
-        for token in self.lexer.tokens:
+        for token in self.lexer.tokens:  # 解析词法单元
             if token.get():
                 w.append(token.get())
-        w.append('$')
+        w.append('$')  # 加入终止符
         w_top = w[top]
-        vt = self.__terminals
-        vn = self.__non_terminals
-        action = self.action
-        goto = self.goto
-        status_stack = [0]
-        result['matched'] = [[]]
+        vt = self.__terminals  # 终结符列表
+        vn = self.__non_terminals  # 非终结符列表
+        action = self.action  # ACTION 表
+        goto = self.goto  # GOTO 表
+        status_stack = [0]  # 状态栈
         while True:
             try:
-                s = status_stack[-1]
-                op = action[s][vt.index(w_top)][0]
-
+                s = status_stack[-1]  # 获取栈顶
+                ops = action[s][vt.index(w_top)]
+                op = ops[0]
+                if 'r' in op and len(ops) >= 2:
+                    print(ops)
+                    p = self.G.production_list[int(op[1:])]
+                    for x in p.body:
+                        if x in self.__terminals and self.__compare(w_top, x):
+                            for o in ops[1:]:
+                                if 's' in o:
+                                    op = o
+                                    break
+                # 记录分析过程
                 result['stack'].append(s)
                 result['operations'].append(op)
                 result['input'].append(w_top)
                 result['matched'].append(result['matched'][-1].copy())
-                if "s" in op:
-                    status_stack.append(int(op[1:]))
+                if "s" in op:  # 移入
+                    status_stack.append(int(op[1:]))  # 状态入栈
                     result['matched'][-1].append(w_top)
                     top += 1
                     w_top = w[top]
-                elif 'r' in op:
+                elif 'r' in op:  # 规约
                     b = int(op[1:])
-                    p = self.G.production_list[b]
+                    p = self.G.production_list[b]  # 选择归于的产生式
                     if p.body[0] != 'ε':
                         for i in range(len(p.body)):
                             status_stack.pop()
-                            result['matched'][-1].pop()
+                            result['matched'][-1].pop()  # 状态出栈
                     c = vn.index(p.head)
                     s = status_stack[-1]
-                    status_stack.append(int(goto[s][c][0]))
-                    result['matched'][-1].append(p.head)
+                    status_stack.append(int(goto[s][c][0]))  # 状态入栈
+                    result['matched'][-1].append(p.head)  # 记录匹配记过
                     # print(p)
-                elif op == "acc":
+                elif op == "acc":  # 接受
                     break
                 else:
-                    result['matched'][-1] = ["语法分析错误，终止分析过程"]
+                    result['matched'][-1] = ["语法分析错误，终止分析过程"]  # 发生错误，终止分析
                     break
-            except Exception as e:
+            except Exception as e:  # 检测异常
                 print(e)
                 result['stack'].append(status_stack[-1])
                 result['operations'].append('err')
