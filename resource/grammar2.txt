@@ -1,0 +1,40 @@
+S' -> S
+S -> program id Stmts
+Stmts -> { Stmt M }
+Stmt -> Stmts
+Stmt -> Stmt M Stmts
+Stmts -> id = Expr ;
+Stmts -> id := Expr ;
+Stmts -> L = Expr ;
+Stmts -> id += Expr ;
+Stmts -> id -= Expr
+Stmts -> id *= Expr
+Stmts -> id /= Expr
+Stmts -> if ( Bool ) M Stmts N else M Stmts
+Stmts -> if ( Bool ) M Stmts
+WhileStmt -> while M ( Bool ) M Stmts
+Bool -> Bool || M Bool
+Bool -> Bool && M Bool
+Bool -> ! Bool
+Bool -> Expr != Expr
+Bool -> Expr == Expr
+Bool -> Expr < Expr
+Bool -> Expr <= Expr
+Bool -> Expr > Expr
+Bool -> Expr >= Expr
+Expr -> Expr + Expr
+Expr -> Expr - Expr
+Expr -> Expr * Expr
+Expr -> Expr / Expr
+Expr -> Expr ^ Expr
+Expr -> Factor
+Factor -> id
+Factor -> Number
+Factor -> ( Expr )
+M -> ε
+N -> ε
+Expr -> L
+L -> id [ Expr ]
+L -> L [ Expr ]
+Number -> integer
+Number -> float
