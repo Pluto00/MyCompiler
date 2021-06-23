@@ -1,40 +1,40 @@
 S' -> S
-S -> program id Stmts
-Stmts -> { Stmt M }
-Stmt -> Stmts
-Stmt -> Stmt M Stmts
-Stmts -> id = Expr ;
-Stmts -> id := Expr ;
-Stmts -> L = Expr ;
-Stmts -> id += Expr ;
-Stmts -> id -= Expr
-Stmts -> id *= Expr
-Stmts -> id /= Expr
-Stmts -> if ( Bool ) M Stmts N else M Stmts
-Stmts -> if ( Bool ) M Stmts
-WhileStmt -> while M ( Bool ) M Stmts
-Bool -> Bool || M Bool
-Bool -> Bool && M Bool
-Bool -> ! Bool
-Bool -> Expr != Expr
-Bool -> Expr == Expr
-Bool -> Expr < Expr
-Bool -> Expr <= Expr
-Bool -> Expr > Expr
-Bool -> Expr >= Expr
-Expr -> Expr + Expr
-Expr -> Expr - Expr
-Expr -> Expr * Expr
-Expr -> Expr / Expr
-Expr -> Expr ^ Expr
-Expr -> Factor
-Factor -> id
-Factor -> Number
-Factor -> ( Expr )
+S -> program id S
+S -> { L M }
+L -> S
+L -> L M S
+S -> id = E ;
+S -> id := E ;
+S -> Arr = E ;
+S -> id += E ;
+S -> id -= E
+S -> id *= E
+S -> id /= E
+S -> if ( B ) M S N else M S
+S -> if ( B ) M S
+S -> while M ( B ) M S
+B -> B || M B
+B -> B && M B
+B -> ! B
+B -> E != E
+B -> E == E
+B -> E < E
+B -> E <= E
+B -> E > E
+B -> E >= E
+E -> E + E
+E -> E - E
+E -> E * E
+E -> E / E
+E -> E ^ E
+E -> F
+F -> id
+F -> Num
+F -> ( E )
 M -> ε
 N -> ε
-Expr -> L
-L -> id [ Expr ]
-L -> L [ Expr ]
-Number -> integer
-Number -> float
+E -> Arr
+Arr -> id [ E ]
+Arr -> Arr [ E ]
+Num -> integer
+Num -> float
