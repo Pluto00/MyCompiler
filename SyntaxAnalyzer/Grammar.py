@@ -6,8 +6,8 @@ class Grammar:
     def __init__(self, grammar_file_path):
         self.production_list = []
         self.production_table = {}
-        self.terminals = set('$')
-        self.non_terminals = set()
+        self.terminals = list('$')
+        self.non_terminals = list()
         self.first_table = {}
         self.follow_table = {}
         self.start = None
@@ -16,22 +16,25 @@ class Grammar:
         self.__init_first_table__()
         self.__init_follow_table__()
 
+        self.terminals = sorted(set(self.terminals), key=self.terminals.index, reverse=True)
+        self.non_terminals = sorted(set(self.non_terminals), key=self.non_terminals.index, reverse=True)
+
     def __read_production_table__(self, file_path):
         file = open(file_path, encoding='utf-8')
         for production in file:
             head, bodies = production.split("->")
             head = head.strip()
             assert head[0].isupper(), "非终结符首字母必须大写, %s" % head
-            self.non_terminals.add(head)
+            self.non_terminals.append(head)
             if not bodies:
                 bodies = 'ε'
             bodies = bodies.strip().split(' ')
             for body in bodies:
                 if not str.isalpha(body[0]) or str.islower(body):
                     assert body in LexerUtils.TerminalList, "非法的终结符, %s" % body
-                    self.terminals.add(body)
+                    self.terminals.append(body)
                 else:
-                    self.non_terminals.add(body)
+                    self.non_terminals.append(body)
             if not self.production_table.get(head):
                 self.production_table[head] = []
             production = ProductionRule(head, bodies)

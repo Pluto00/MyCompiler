@@ -114,14 +114,14 @@
                     document.getElementsByClassName('grammar')[0].classList.remove('block-hide');
                     // 把返回数据写到下面
                     document.getElementsByClassName('output')[1].value = res.output;
-
+                    select(progress + 1);
                 })
                 .catch((error) => {
                     alert(error)
                 })
         } else if (progress == 3) {
             // 中间代码
-            fetch('/api/pass', {
+            fetch('/api/sdt/code', {
                 method: 'POST',
                 headers: {
                     'content-type': 'application/json'
@@ -135,7 +135,7 @@
                     console.log(res);
                     document.getElementsByClassName('code')[0].classList.remove('block-hide');
                     // 把返回数据写到下面
-                    document.getElementsByClassName('output')[2].value = '中间代码分析输出';
+                    document.getElementsByClassName('output')[2].value = res.output;
 
                 })
                 .catch((error) => {

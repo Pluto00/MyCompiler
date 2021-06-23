@@ -2,6 +2,7 @@ from Production import ProductionItem, ProductionRule
 from Grammar import Grammar
 from Lexer import Lexer
 from itertools import chain
+from Translator import Translator
 import xlwt
 
 
@@ -93,23 +94,41 @@ class SLRTable:
                             self.action[st][self.__terminals.index(f)].append('r' + str(pid))
             st += 1
 
-    def __compare(self, x1, x2):
-        print(x1, x2)
-        op_list = ['^', '*', '/', '+', '-']
-        return x1 in op_list and x2 in op_list and op_list.index(x1) < op_list.index(x2)
+    def __solve_r_s(self, op1, x1, op2, x2):
+        reduce = op1 if op1[0] == 'r' else op2
+        shift = op1 if op1[0] == 's' else op2
+        if x1 in ['-', '+'] and x2 in ['-', '+']:
+            return reduce
+        if x1 in ['*', '/'] and x2 in ['*', '/']:
+            return reduce
+        else:
+            if self.__terminals.index(x1) < self.__terminals.index(x2):
+                return shift
+            else:
+                return reduce
 
-    def analyze(self, code_file):
+        # op_list = ['^', '*', '/', '+', '-', 'else', 'Stmts']
+        # return x1 in op_list and x2 in op_list and op_list.index(x1) < op_list.index(x2)
+        # return x1 in self.__terminals and x2 in self.__terminals and self.__terminals.index(
+        #     x1) < self.__terminals.index(x2)
+
+    def analyze(self, code_file, translate=False):
         result = {'stack': [], 'input': [], 'operations': [], 'matched': [[]]}  # 输出
         if type(code_file) == str:
             code_file = open(code_file, encoding='utf-8')
         self.lexer.parse(code_file)  # 调用词法分析器分析代码文件，获取词法单元
         top = 0
         w = []
+        tokens = []
         for token in self.lexer.tokens:  # 解析词法单元
             if token.get():
                 w.append(token.get())
+                tokens.append(token)
+        translator = Translator() if translate else None
         w.append('$')  # 加入终止符
+        tokens.append(None)
         w_top = w[top]
+        token_top = tokens[top]
         vt = self.__terminals  # 终结符列表
         vn = self.__non_terminals  # 非终结符列表
         action = self.action  # ACTION 表
@@ -120,15 +139,20 @@ class SLRTable:
                 s = status_stack[-1]  # 获取栈顶
                 ops = action[s][vt.index(w_top)]
                 op = ops[0]
-                if 'r' in op and len(ops) >= 2:
-                    print(ops)
-                    p = self.G.production_list[int(op[1:])]
-                    for x in p.body:
-                        if x in self.__terminals and self.__compare(w_top, x):
-                            for o in ops[1:]:
-                                if 's' in o:
-                                    op = o
+                if len(ops) >= 2:
+                    for _op in ops:
+                        if op[0] == 'r' and _op[0] == 'r':  # 规约-规约冲突
+                            if int(_op[1:]) > int(op[1:]):
+                                op = _op
+                        elif (op[0] == 'r' and _op[0] == 's') or (op[0] == 's' and _op[0] == 'r'):  # 规约-移入冲突
+                            p = self.G.production_list[int(op[1:])]
+                            for x in p.body:
+                                if x in self.__terminals:
+                                    ret = self.__solve_r_s(op, w_top, _op, x)
+                                    if ret:
+                                        op = ret
                                     break
+
                 # 记录分析过程
                 result['stack'].append(s)
                 result['operations'].append(op)
@@ -137,8 +161,11 @@ class SLRTable:
                 if "s" in op:  # 移入
                     status_stack.append(int(op[1:]))  # 状态入栈
                     result['matched'][-1].append(w_top)
+                    if translate:
+                        translator.shift_process(token_top)
                     top += 1
                     w_top = w[top]
+                    token_top = tokens[top]
                 elif 'r' in op:  # 规约
                     b = int(op[1:])
                     p = self.G.production_list[b]  # 选择归于的产生式
@@ -146,12 +173,15 @@ class SLRTable:
                         for i in range(len(p.body)):
                             status_stack.pop()
                             result['matched'][-1].pop()  # 状态出栈
+                    if translate:
+                        translator.reduce_process(b, p)
                     c = vn.index(p.head)
                     s = status_stack[-1]
                     status_stack.append(int(goto[s][c][0]))  # 状态入栈
                     result['matched'][-1].append(p.head)  # 记录匹配记过
                     # print(p)
                 elif op == "acc":  # 接受
+                    result['matched'][-1] = ['S\'']
                     break
                 else:
                     result['matched'][-1] = ["语法分析错误，终止分析过程"]  # 发生错误，终止分析
@@ -164,6 +194,8 @@ class SLRTable:
                 result['matched'].append(["语法分析错误，终止分析过程"])
                 print(result)
                 break
+        if translate:
+            return translator.gen_code()
         return result
 
     def print_states(self):

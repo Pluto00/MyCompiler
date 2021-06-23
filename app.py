@@ -4,7 +4,7 @@ from SyntaxAnalyzer import SLRTable
 
 app = Flask(__name__)
 lex = Lexer()
-slr = SLRTable(lexer=lex)
+slr = SLRTable(lexer=lex, debug=False, grammar_file_path='resource/grammar2.txt')
 
 
 @app.route("/")
@@ -34,6 +34,17 @@ def post_syntax_analyzer_code():
     for i in range(len(res['stack'])):
         response["output"] += ("%-8s %-8s %-8s " % (
             res['stack'][i], res['input'][i], res['operations'][i])) + ' '.join(res['matched'][i + 1]) + '\n'
+    return jsonify(response)
+
+
+@app.route("/api/sdt/code", methods=["POST"])
+def post_sdt_code():
+    code = request.json.get("code")
+    with open('code.cache', 'w', encoding='utf-8') as fh:
+        fh.write(code)
+    with open('code.cache', encoding='utf-8') as fh:
+        res = slr.analyze(fh, True)
+    response = {'output': res}
     return jsonify(response)
 
 
