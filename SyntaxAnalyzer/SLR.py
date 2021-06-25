@@ -134,6 +134,7 @@ class SLRTable:
         action = self.action  # ACTION 表
         goto = self.goto  # GOTO 表
         status_stack = [0]  # 状态栈
+        has_error = False
         while True:
             try:
                 s = status_stack[-1]  # 获取栈顶
@@ -188,6 +189,7 @@ class SLRTable:
                     break
             except Exception as e:  # 检测异常
                 print(e)
+                has_error = True
                 result['stack'].append(status_stack[-1])
                 result['operations'].append('err')
                 result['input'].append(w_top)
@@ -195,6 +197,8 @@ class SLRTable:
                 print(result)
                 break
         if translate:
+            if has_error:
+                return "代码存在语法错误，请检查"
             return translator.gen_code()
         return result
 

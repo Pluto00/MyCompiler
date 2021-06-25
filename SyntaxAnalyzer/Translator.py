@@ -27,7 +27,6 @@ class Translator:
         self.attributes = []
         self.codes = []
         self.temp_number = 1
-        self.hasError = False
 
     def shift_process(self, tok):
         if tok.name != 'id' and tok.name != 'float' and tok.name != 'integer':
@@ -37,9 +36,8 @@ class Translator:
 
     def reduce_process(self, b, p):
         left = p.head
-        right = ' '.join(p.body)
+        right = p.body
         getattr(self, 'action' + str(b))(left, right)
-        # eval("self.action{}(left, right)".format(b))
 
     def action0(self, left, right):
         # S' -> S
@@ -47,8 +45,7 @@ class Translator:
 
     def action1(self, left, right):
         # S -> program id S
-        right = len(right.split(" "))
-        for i in range(right):
+        for i in range(len(right)):
             self.attributes.pop()
         self.attributes.append(Attribute(left, "null", "null"))
 
@@ -56,32 +53,32 @@ class Translator:
         # S -> { L M }
         self.attributes.pop()
         M = self.attributes.pop()
-        stmts = self.attributes.pop()
+        L = self.attributes.pop()
         self.attributes.pop()
-        self.back_patch(stmts.next_list, M.instr)
+        self.back_patch(L.next_list, M.instr)
         self.attributes.append(Attribute(left, "null", "null"))
 
     def action3(self, left, right):
         # L -> S
-        stmts = self.attributes.pop().next_list
-        self.attributes.append(Attribute(left, "null", "null", next_list=stmts))
+        S = self.attributes.pop()
+        self.attributes.append(Attribute(left, "null", "null", next_list=S.next_list))
 
     def action4(self, left, right):
         # L -> L M S
-        stmts = self.attributes.pop()
+        S = self.attributes.pop()
         M = self.attributes.pop()
-        stmt = self.attributes.pop()
-        self.back_patch(stmt.next_list, M.instr)
-        self.attributes.append(Attribute(left, "null", "null", next_list=stmts.next_list))
+        L = self.attributes.pop()
+        self.back_patch(L.next_list, M.instr)
+        self.attributes.append(Attribute(left, "null", "null", next_list=S.next_list))
 
     def action5(self, left, right):
         # S -> id =|:= E ;
         self.attributes.pop()
-        expr = self.attributes.pop().addr
+        E = self.attributes.pop()
         self.attributes.pop()
-        ids = self.attributes.pop().value
-        self.attributes.append(Attribute(left, "null", ids))
-        self.codes.append(Code("=", expr, "null", ids))
+        ids = self.attributes.pop()
+        self.attributes.append(Attribute(left, "null", ids.value))
+        self.codes.append(Code("=", E.addr, "null", ids.value))
 
     def action6(self, left, right):
         self.action5(left, right)
@@ -89,22 +86,22 @@ class Translator:
     def action7(self, left, right):
         # S -> Arr = E ;
         self.attributes.pop()
-        expr = self.attributes.pop().addr
+        E = self.attributes.pop()
         self.attributes.pop()
-        L = self.attributes.pop()
-        addr = L.addr  # 数组的地址
-        array = L.value  # 数组的标识符
+        Arr = self.attributes.pop()
+        addr = Arr.addr  # 数组的地址
+        array = Arr.value  # 数组的标识符
         self.attributes.append(Attribute(left, "null", addr))
-        self.codes.append(Code("[]=", addr, expr, array))
+        self.codes.append(Code("[]=", addr, E.addr, array))
 
     def action8(self, left, right):
         # S -> id +=|-=|*=|/= E ;
         self.attributes.pop()
-        expr = self.attributes.pop().addr
+        E = self.attributes.pop()
         op = self.attributes.pop().type
-        ids = self.attributes.pop().value
-        self.attributes.append(Attribute(left, "null", ids))
-        self.codes.append(Code(op, ids, expr, ids))
+        ids = self.attributes.pop()
+        self.attributes.append(Attribute(left, "null", ids.value))
+        self.codes.append(Code(op, ids, E.addr, ids.value))
 
     def action9(self, left, right):
         self.action8(left, right)
@@ -135,29 +132,28 @@ class Translator:
 
     def action13(self, left, right):
         # S -> if ( B ) M S
-        stmt1 = self.attributes.pop()
+        S = self.attributes.pop()
         M = self.attributes.pop()
         self.attributes.pop()
         B = self.attributes.pop()
         self.attributes.pop()
         self.attributes.pop()
         self.back_patch(B.true_list, M.instr)
-        next_list = self.merge(B.false_list, stmt1.next_list)
+        next_list = self.merge(B.false_list, S.next_list)
         self.attributes.append(Attribute(left, "null", "null", None, None, -1, next_list))
 
     def action14(self, left, right):
         # L -> while M ( B ) M S
-        stmt = self.attributes.pop().next_list
+        S = self.attributes.pop()
         M2 = self.attributes.pop().instr
         self.attributes.pop()
-        true_list = self.attributes[-1].true_list
-        false_list = self.attributes.pop().false_list
+        B = self.attributes.pop()
         self.attributes.pop()
         M1 = self.attributes.pop().instr
         self.attributes.pop()
-        self.back_patch(stmt, M1)
-        self.back_patch(true_list, M2)
-        self.attributes.append(Attribute(left, "null", "null", None, None, -1, false_list))
+        self.back_patch(S.next_list, M1)
+        self.back_patch(B.true_list, M2)
+        self.attributes.append(Attribute(left, "null", "null", None, None, -1, B.false_list))
         self.codes.append(Code("goto", "null", "null", str(M1 + 100)))
 
     def action15(self, left, right):
@@ -183,19 +179,17 @@ class Translator:
     def action17(self, left, right):
         # B -> ! B
         B1 = self.attributes.pop()
-        true_list = B1.false_list
-        false_list = B1.true_list
-        self.attributes.append(Attribute(left, "null", "null", true_list, false_list, -1))
+        self.attributes.append(Attribute(left, "null", "null", B1.true_list, B1.false_list, -1))
 
     def action18(self, left, right):
         # B -> E !=|==|<=|<|>|>= E
-        expr2 = self.attributes.pop().addr
+        E2 = self.attributes.pop().addr
         op = self.attributes.pop().type
-        expr1 = self.attributes.pop().addr
+        E1 = self.attributes.pop().addr
         true_list = [len(self.codes)]
         false_list = [len(self.codes) + 1]
         self.attributes.append(Attribute(left, "null", "null", true_list, false_list))
-        self.codes.append(Code(op, expr1, expr2, "_"))  # true_list: if ( expr1 REL expr2 ) goto _
+        self.codes.append(Code(op, E1, E2, "_"))  # true_list: if ( expr1 REL expr2 ) goto _
         self.codes.append(Code("goto", "null", "null", "_"))  # false_list: goto _
 
     def action19(self, left, right):
@@ -215,12 +209,12 @@ class Translator:
 
     def action24(self, left, right):
         # E -> E +|-|*|/|^ E
-        factor = self.attributes.pop().addr
+        E2 = self.attributes.pop()
         op = self.attributes.pop().type
-        term1 = self.attributes.pop().addr
-        term = self.get_temp()
-        self.attributes.append(Attribute(left, "null", term))
-        self.codes.append(Code(op, term1, factor, term))
+        E1 = self.attributes.pop()
+        tmp = self.get_temp()
+        self.attributes.append(Attribute(left, "null", addr=tmp))
+        self.codes.append(Code(op, E1.addr, E2.addr, tmp))
 
     def action25(self, left, right):
         self.action24(left, right)
@@ -236,15 +230,13 @@ class Translator:
 
     def action29(self, left, right):
         # E -> F
-        tmp = self.attributes[-1].addr
-        self.attributes.pop()
-        self.attributes.append(Attribute(left, "null", tmp))
+        F = self.attributes.pop()
+        self.attributes.append(Attribute(left, "null", addr=F.addr))
 
     def action30(self, left, right):
         # F -> id
-        tmp = self.attributes[-1].value
-        self.attributes.pop()
-        self.attributes.append(Attribute(left, "null", tmp))
+        ids = self.attributes.pop()
+        self.attributes.append(Attribute(left, "null", addr=ids.value))
 
     def action31(self, left, right):
         # F -> Num
@@ -253,9 +245,9 @@ class Translator:
     def action32(self, left, right):
         # F -> ( E )
         self.attributes.pop()
-        expr = self.attributes.pop().addr
+        E = self.attributes.pop()
         self.attributes.pop()
-        self.attributes.append(Attribute(left, "null", expr))
+        self.attributes.append(Attribute(left, "null", addr=E.addr))
 
     def action33(self, left, right):
         # M -> ε
@@ -270,20 +262,21 @@ class Translator:
 
     def action35(self, left, right):
         # E -> Arr
-        term = self.get_temp()
-        addr = self.attributes[-1].addr  # 数组的地址
-        ids = self.attributes.pop().value  # 数组的标识符
-        self.attributes.append(Attribute(left, ids, term))
-        self.codes.append(Code("=[]", ids, addr, term))  # term = ids[addr]
+        tmp = self.get_temp()
+        Arr = self.attributes.pop()
+        addr = Arr.addr  # 数组的地址
+        ids = Arr.value  # 数组的标识符
+        self.attributes.append(Attribute(left, ids, tmp))
+        self.codes.append(Code("=[]", ids, addr, tmp))  # tmp = ids[addr]
 
     def action36(self, left, right):
         # Arr -> id [ E ]
         self.attributes.pop()
-        expr = self.attributes.pop()
+        E = self.attributes.pop()
         self.attributes.pop()
         ids = self.attributes.pop()
         addr = self.get_temp()
-        code = Code("*", expr.addr, 4, addr)
+        code = Code("*", E.addr, 4, addr)
         pre_list = [code]
         self.attributes.append(Attribute(left, ids, addr, array_depth=1, pre_list=pre_list))
         self.codes.append(code)
@@ -291,24 +284,24 @@ class Translator:
     def action37(self, left, right):
         # Arr -> Arr [ E ]
         self.attributes.pop()
-        expr = self.attributes.pop()
+        E = self.attributes.pop()
         self.attributes.pop()
-        L1 = self.attributes.pop()
+        Arr = self.attributes.pop()
         t = self.get_temp()
         addr = self.get_temp()
-        code = Code("*", expr.addr, 4, t)
+        code = Code("*", E.addr, 4, t)
         default_len = [i * 10 for i in range(1, 9)]  # 默认数组维度 int [10][20][30][40][50]...
-        current_width = default_len[L1.array_depth]
+        current_width = default_len[Arr.array_depth]
         # l * 4
         # k * 4 * 40
         # j * 4 * 30 * 40
         # i * 4 * 20 * 30 * 40
-        for pl in L1.pre_list:
+        for pl in Arr.pre_list:
             pl.arg2 *= current_width
-        pre_list = L1.pre_list + [code]
-        self.attributes.append(Attribute(left, L1.value, addr, array_depth=L1.array_depth + 1, pre_list=pre_list))
+        pre_list = Arr.pre_list + [code]
+        self.attributes.append(Attribute(left, Arr.value, addr, array_depth=Arr.array_depth + 1, pre_list=pre_list))
         self.codes.append(code)
-        self.codes.append(Code("+", L1.addr, t, addr))
+        self.codes.append(Code("+", Arr.addr, t, addr))
 
     def action38(self, left, right):
         # Num -> integer
