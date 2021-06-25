@@ -7,9 +7,9 @@ S -> id = E ;
 S -> id := E ;
 S -> Arr = E ;
 S -> id += E ;
-S -> id -= E
-S -> id *= E
-S -> id /= E
+S -> id -= E ;
+S -> id *= E ;
+S -> id /= E ;
 S -> if ( B ) M S N else M S
 S -> if ( B ) M S
 S -> while M ( B ) M S
