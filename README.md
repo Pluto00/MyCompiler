@@ -8,14 +8,15 @@
 
 3. 可视化界面
 
+4. 支持生成中间代码
+
 ## use
 
 1. `pip install flask`
 
 2. `python app.py`
 
-## debug
-
+## debugd
 `python ./SyntaxAnalyzer/SLR.py` -> `./resource/debug_info.xls`
 
 ## screen shots
@@ -25,3 +26,5 @@
 ![debug_info_1](https://raw.githubusercontent.com/Pluto00/MyCompiler/master/screenshots/debug_info_1.png)
 
 ![debug_info_2](https://raw.githubusercontent.com/Pluto00/MyCompiler/master/screenshots/debug_info_2.png)
+
+![sdt](https://raw.githubusercontent.com/Pluto00/MyCompiler/master/screenshots/sdt.png)
