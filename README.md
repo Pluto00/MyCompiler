@@ -10,13 +10,14 @@
 
 4. 支持生成中间代码
 
-## use
+## usage
 
 1. `pip install flask`
 
 2. `python app.py`
 
-## debugd
+## debug
+
 `python ./SyntaxAnalyzer/SLR.py` -> `./resource/debug_info.xls`
 
 ## screen shots
